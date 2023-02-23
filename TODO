@@ -1,0 +1,16 @@
+- Create Configuration File - DONE
+
+- Make server initialize configuration - DONE
+    - If file doesn't exist, print error and don't do anything.
+
+- Commands to be implemented:
+    - Copy files: copy
+    - Move files: move
+    - Delete files: delete
+    - List all files/dirs (name, size, date of last access): list
+    - Create a new directory: create_dir
+    - Delete a directory (only if empty): delete_dir
+    - Change the current working directory (only monolythic App.): cd 
+
+
+- Create Makefile for server
