@@ -1,6 +1,15 @@
 #include "client.h"
 
-int main() {
+int main(int argc, char* argv[]) {
+
+    if (argc!=3) {
+	    printf("\nUsage:\n\t%s <IP> <PORT>\n",argv[0]);
+	    return 1;
+    }
+
+    char* SERVER_IP = argv[1];
+    int SERVER_PORT = atoi(argv[2]);
+
     //Create a socket
     int sock = socket(AF_INET, SOCK_STREAM, 0);   
     if (sock == -1) {
