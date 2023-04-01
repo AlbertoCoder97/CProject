@@ -33,8 +33,19 @@ int initializeConfig(Config* configuration, char* configFilePath)
         if(strcmp(strtok(line, "\n"), "#Root") == 0)
         {
             char* fakeRoot = strtok(fgets(line, sizeof(line), configFile),"\n");
-            printf("%s::%s - Root configuration found. Setting root to: %s\n", className, methodName, fakeRoot);
-            strcpy(configuration->root, fakeRoot);
+            char* absolute_path = malloc(MAX_ROOT_LEN);
+            if (absolute_path == NULL) {
+                perror("malloc");
+                return 1;
+            }
+
+            if (realpath(fakeRoot, absolute_path) == NULL) {
+                perror("realpath");
+                free(absolute_path);
+                return 1;
+            }
+            printf("%s::%s - Root configuration found. Setting root to: %s\n", className, methodName, absolute_path);
+            strncpy(configuration->root, absolute_path, strlen(absolute_path));
         }
         if(strcmp(strtok(line, "\n"), "#Cmds") == 0)
         {
@@ -44,7 +55,7 @@ int initializeConfig(Config* configuration, char* configFilePath)
                 if(command != NULL)
                 {
                     printf("%s::%s - Command found. Added command: %s to list of available commands.\n", className, methodName, command);
-                    strcpy(configuration->commands[i], command);
+                    strncpy(configuration->commands[i], command, strlen(command));
                 }
             }
         }
@@ -56,5 +67,35 @@ int initializeConfig(Config* configuration, char* configFilePath)
     //Always close file
     fclose(configFile);
 
+    return 0;
+}
+
+
+void printConfig(Config* pConfiguration)
+{
+    char* methodName = "printConfig";
+    printf("%s::%s - Configuration's Port: %d\n", className, methodName, pConfiguration->port);
+    printf("%s::%s - Configuration's Root: %s\n", className, methodName, pConfiguration->root);
+
+    for(int i = 0; i < MAX_COMMANDS; i++)
+    {
+        printf("%s::%s - Allowed command: %s\n", className, methodName, pConfiguration->commands[i]);
+    }
+}
+
+
+int isCommandAllowed(Config* config, char* command)
+{
+    char* methodName = "isCommandAllowed";
+    char* temp = getFirstWord(command);
+    for(int i = 0; i < MAX_COMMANDS; i++)
+    {
+        if(strcmp(strtok(temp, "\n"), config->commands[i]) == 0)
+        {
+            printf("%s::%s - The command [%s] is allowed!\n", className, methodName, command);
+            return 0;
+        }
+    }
+    printf("%s::%s - The command [%s] is not allowed!\n", className, methodName, command);
     return 1;
 }
