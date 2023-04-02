@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
                 // Shutdown socket -- a good habit
                 shutdown(new_socket,SHUT_RDWR);
                 close(new_socket);
-                exit(1);
+                return 1;
             }
 
             //Getting IP of the client that connected.
@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
                 shutdown(new_socket,SHUT_RDWR);
                 // Close the connection and exit the child process
                 close(new_socket);
-                exit(1);
+                return -1;
             }
 
             // Read commands from the client until the connection is closed
@@ -99,10 +99,21 @@ int main(int argc, char* argv[]) {
                     break;
                 }
 
+                
+
                 /* Commands handling */
 
                 //Remove the newline character at the end of the command
                 char* command = strtok(buffer, "\n");
+
+                //Prevents command injection.
+                if(containsChar(command, ';')) {
+                    char* message = "Operation not allowed!";
+                    send(new_socket, message, strlen(message), 0);
+                    memset(buffer, 0, MAX_CLIENTCMDS_LENGTH);
+                    continue;
+                }
+
                 if(strcmp(getFirstWord(command), "exit") == 0) {
                     
                     //Sending exitACK to client
@@ -299,6 +310,43 @@ int main(int argc, char* argv[]) {
                                     send(new_socket, message, strlen(message), 0);
                             } else {
                                 char* message = concat("Deleted directory: ", param);
+                                send(new_socket, message, strlen(message), 0);
+                            }
+                        }
+                    }
+                }
+
+                //Handle delete file.
+                else if(strcmp(getFirstWord(command), "delete") == 0) {
+                    char* param = removeFirstWord(command);
+
+                    //This ensures that only one parameter is passed as the directory name.
+                    if(countWords(param) != 1) {
+                        char* message = "Wrong command usage. Syntax: delete <file>";
+                        send(new_socket, message, strlen(message), 0);
+                    } else {
+                        //All these checks to avoid clients being able to delete anything on the server's disk other than folders inside the configuration's root directory.
+                        if (param[0] == '/') {
+                            if (strncmp(param, pConfiguration->root, strlen(pConfiguration->root)) != 0) {
+                                char* message = "Cannot delete file outside the fake root path.";
+                                send(new_socket, message, strlen(message), 0);
+                            } else {
+                                int status = remove(param);
+                                if (status == -1) {
+                                    char* message = concat("Error while trying to delete file: ", param);
+                                    send(new_socket, message, strlen(message), 0);
+                                } else {
+                                    char* message = concat("Deleted file: ", param);
+                                    send(new_socket, message, strlen(message), 0);
+                                }
+                            }
+                        } else {
+                            int status = remove(param);
+                            if (status == -1) {
+                                char* message = concat("Error while trying to delete file: ", param);
+                                send(new_socket, message, strlen(message), 0);
+                            } else {
+                                char* message = concat("Deleted file: ", param);
                                 send(new_socket, message, strlen(message), 0);
                             }
                         }
