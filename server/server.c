@@ -356,7 +356,7 @@ int main(int argc, char* argv[]) {
                 //Copy file receives a file from the client and copies it in the 2nd parameter of the command.
                 //TODO: Make sure copy happens inside fakeRoot directory.
                 //Handle copy
-                else if(strcmp(getFirstWord(command), "copy") == 0) {
+                else if(strcmp(getFirstWord(command), "copy_remote") == 0) {
                     //Once we know it's a copy command, we need to create the file (if it's not on disk) and write in it.
                     //TODO: Add semaphore to allow only one writer at the time.
 
@@ -365,7 +365,7 @@ int main(int argc, char* argv[]) {
                     char* fileToWrite = getWord(param, 1);
 
                     if(countWords(param) != 2) {
-                        char* message = "Wrong command usage. Syntax: copy <file1> <file2>";
+                        char* message = "Wrong command usage. Syntax: copy_remote <file1> <file2>";
                         send(new_socket, message, strlen(message), 0);
                     } else {
                         //Check if second param (file where to write) is inside fakeRoot.
@@ -400,6 +400,61 @@ int main(int argc, char* argv[]) {
                             }
 
                             char* message = "File copied to server.";
+                            send(new_socket, message, strlen(message), 0);
+                        }
+                    }
+                }
+
+                //Handle move
+                else if(strcmp(getFirstWord(command), "copy") == 0) {
+                    char* param = removeFirstWord(command);
+                    char* param1 = getWord(param, 0);
+                    char* param2 = getWord(param, 1);
+
+                    //This ensures that only one parameter is passed as the directory name.
+                    if(countWords(param) != 2) {
+                        char* message = "Wrong command usage. Syntax: copy <file1> <file2>";
+                        send(new_socket, message, strlen(message), 0);
+                    } else {
+                        /* Handle copy file absolute paths */
+                        //Both absolute paths
+                        if(param1[0] == '/' && param2[0] == '/') {
+                            if (strncmp(param1, pConfiguration->root, strlen(pConfiguration->root)) != 0 || 
+                                strncmp(param2, pConfiguration->root, strlen(pConfiguration->root)) != 0) {
+                                char* message = "Cannot copy files outside the fake root path.";
+                                send(new_socket, message, strlen(message), 0);
+                            } else {
+                                copyFile(param1, param2);
+                                char* message = "Filed moved.";
+                                send(new_socket, message, strlen(message), 0);
+                            }
+                        }
+
+                        //Only first is absolute path
+                        else if(param1[0] == '/') {
+                            if (strncmp(param1, pConfiguration->root, strlen(pConfiguration->root)) != 0) {
+                                char* message = "Cannot copy files from outside the fake root path.";
+                                send(new_socket, message, strlen(message), 0);
+                            } else {
+                                copyFile(param1, param2);
+                                char* message = "Filed moved.";
+                                send(new_socket, message, strlen(message), 0);
+                            }
+                        }
+
+                        //Only second is absolute path
+                        else if(param2[0] == '/') {
+                            if (strncmp(param1, pConfiguration->root, strlen(pConfiguration->root)) != 0) {
+                                char* message = "Cannot copy files from outside the fake root path.";
+                                send(new_socket, message, strlen(message), 0);
+                            } else {
+                                copyFile(param1, param2);
+                                char* message = "Filed moved.";
+                                send(new_socket, message, strlen(message), 0);
+                            }
+                        } else {
+                            copyFile(param1, param2);
+                            char* message = "Filed moved.";
                             send(new_socket, message, strlen(message), 0);
                         }
                     }

@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
             }       
         }
 
-        else if(strcmp(getFirstWord(buffer), "copy") == 0) {
+        else if(strcmp(getFirstWord(buffer), "copy_remote") == 0) {
             char* fileToSend = getWord(buffer, 1);
             printf("Sending file %s to server.\n", fileToSend);
 
